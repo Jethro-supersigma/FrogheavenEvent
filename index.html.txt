@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tadpole Generator with Luck Boost</title>
+</head>
+<body>
+    <button onclick="addCurrency()">Earn +1 Currency</button>
+    <p>Currency: <span id="currency">0</span></p>
+
+    <button onclick="buyLuckBoost()">Buy Luck Boost (200 Currency)</button>
+    <p>Luck Boost: <span id="luck">Inactive</span></p>
+
+    <button onclick="generateTadpole(50)">Standard Tadpole Crate (50 Currency)</button>
+    <button onclick="generateTadpole(100)">Rare Tadpole Crate (100 Currency)</button>
+    <p id="output"></p>
+
+    <h3>Hatching History:</h3>
+    <ul id="history"></ul>
+
+    <script>
+        let currency = localStorage.getItem("currency") ? parseInt(localStorage.getItem("currency")) : 0;
+        let history = localStorage.getItem("history") ? JSON.parse(localStorage.getItem("history")) : [];
+        let luckBoost = localStorage.getItem("luckBoost") ? JSON.parse(localStorage.getItem("luckBoost")) : false;
+
+        document.getElementById("currency").innerText = currency;
+        document.getElementById("luck").innerText = luckBoost ? "Active" : "Inactive";
+        updateHistoryDisplay();
+
+        function addCurrency() {
+            currency++;
+            document.getElementById("currency").innerText = currency;
+            localStorage.setItem("currency", currency);
+        }
+
+        function buyLuckBoost() {
+            if (currency >= 200) {
+                luckBoost = true;
+                currency -= 200;
+                document.getElementById("currency").innerText = currency;
+                document.getElementById("luck").innerText = "Active";
+                localStorage.setItem("luckBoost", JSON.stringify(luckBoost));
+                localStorage.setItem("currency", currency);
+            } else {
+                alert("Not enough currency to buy Luck Boost!");
+            }
+        }
+
+        function generateTadpole(cost) {
+            if (currency >= cost) {
+                const standardTadpoles = [
+                    { name: "Common Frog Tadpole", rarity: 50 },
+                    { name: "Bullfrog Tadpole", rarity: 25 },
+                    { name: "Tree Frog Tadpole", rarity: 15 },
+                    { name: "Axolotl Larvae", rarity: 7 },
+                    { name: "Poison Dart Frog Tadpole", rarity: 3 },
+                ];
+
+                const rareTadpoles = [
+                    { name: "Common Frog Tadpole", rarity: 20 },
+                    { name: "Bullfrog Tadpole", rarity: 20 },
+                    { name: "Tree Frog Tadpole", rarity: 25 },
+                    { name: "Axolotl Larvae", rarity: 20 },
+                    { name: "Poison Dart Frog Tadpole", rarity: 15 },
+                ];
+
+                let tadpoles = cost === 100 ? rareTadpoles : standardTadpoles;
+
+                // Apply luck boost (enhances rare tadpole chances)
+                if (luckBoost) {
+                    tadpoles.forEach(tadpole => {
+                        tadpole.rarity *= 1.5; // Increase rarity chances
+                    });
+                }
+
+                let roll = Math.random() * 100;
+                let chosenTadpole = "Nothing—try again!";
+
+                let cumulativeProbability = 0;
+                for (let tadpole of tadpoles) {
+                    cumulativeProbability += tadpole.rarity;
+                    if (roll < cumulativeProbability) {
+                        chosenTadpole = tadpole.name;
+                        break;
+                    }
+                }
+
+                document.getElementById("output").innerText = "Random Tadpole: " + chosenTadpole;
+
+                if (chosenTadpole !== "Nothing—try again!") {
+                    history.push(chosenTadpole);
+                    localStorage.setItem("history", JSON.stringify(history));
+                }
+
+                currency -= cost;
+                document.getElementById("currency").innerText = currency;
+                localStorage.setItem("currency", currency);
+
+                updateHistoryDisplay();
+            } else {
+                document.getElementById("output").innerText = "Not enough currency! Earn more to open a crate.";
+            }
+        }
+
+        function updateHistoryDisplay() {
+            let historyList = document.getElementById("history");
+            historyList.innerHTML = "";
+            history.forEach(tadpole => {
+                let listItem = document.createElement("li");
+                listItem.innerText = tadpole;
+                historyList.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
